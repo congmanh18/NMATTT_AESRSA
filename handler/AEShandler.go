@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/congmanh18/NMATTT_AESRSA/database"
 	"github.com/congmanh18/NMATTT_AESRSA/model"
+	"github.com/google/uuid"
 )
 
 // EncryptAES mã hóa thông điệp bằng AES
@@ -57,6 +59,8 @@ func EncryptionAESHandler(repo *database.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse request body
 		var data model.Data
+		data.ID = uuid.New().String()
+
 		err := json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -72,6 +76,9 @@ func EncryptionAESHandler(repo *database.Repository) http.HandlerFunc {
 
 		// Encode the encrypted message as base64
 		encodedMessage := base64.StdEncoding.EncodeToString(encryptedMessage)
+		data.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		data.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		repo.DB.Create(&data)
 
 		// Send the encrypted message in the response
 		response := struct {
@@ -89,6 +96,8 @@ func DecryptionAESHandler(repo *database.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse request body
 		var data model.Data
+		data.ID = uuid.New().String()
+
 		err := json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -104,6 +113,10 @@ func DecryptionAESHandler(repo *database.Repository) http.HandlerFunc {
 
 		// Decrypt the message
 		decryptedMessage, err := DecryptAES(encryptedMessage, []byte(*data.Key))
+		data.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		data.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		repo.DB.Create(&data)
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
