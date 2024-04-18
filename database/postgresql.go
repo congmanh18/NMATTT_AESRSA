@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type Repository struct {
+	DB *gorm.DB
+}
+
 type Sql struct {
 	Db       *gorm.DB
 	Host     string
